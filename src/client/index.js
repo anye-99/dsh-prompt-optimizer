@@ -152,18 +152,20 @@ export function apply(ctx) {
   // 只包住回调是不够的——早期版本只守了回调，inject 抛出会一路冒到插件加载，
   // 把 GUI 启动带崩（client bundle 自检抓到的真 bug）。
   try {
+    // 回调**不返回值**：按官方契约，回调内的注册由宿主在 owner 声明收起时统一释放
+    // （"The callback's registrations are disposed when the owning declaration
+    // collapses and reinstalled when it returns"）。此前 return 一个 cleanup 函数
+    // 是自造语义，与官方模板不一致。
     ctx.slots.inject(SLOT, () => {
       try {
-        const unregister = ctx.slots.register({
+        ctx.slots.register({
           name: SLOT,
           id: 'prompt-optimizer-button',
           // 排在梁神拉杆(20)之后，靠近提交按钮侧
           order: 30,
         }, OptimizeButton)
-        return () => { try { unregister() } catch { /* 幂等 */ } }
       } catch {
         // slot 不可用（宿主版本变了）→ 安静地不显示按钮，绝不让 GUI 崩
-        return () => {}
       }
     })
   } catch {

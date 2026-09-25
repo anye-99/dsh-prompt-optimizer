@@ -66,7 +66,17 @@ ${clientJs.split('\n').map(l => '\t\t' + l).join('\n')}
 		exports.OptimizeButton = OptimizeButton;
 		exports.optimizePrompt = optimizePrompt;
 		exports.default = __defaultExport;
-		return module.exports;
+		/*
+		 * 契约要点（2026-09-26 实测，官方 decoration 模板为准）：
+		 * factory **直接返回插件对象本身** { inject, apply }。
+		 *
+		 * 不要依赖 module.exports + default 让宿主走 unwrapExports 兜底——
+		 * unwrapExports 是 exports.default ?? exports，任何一处漏带 inject 都会让
+		 * plugin.inject 变 undefined，ctx.slots 拿不到，apply 首行 return：
+		 * 表现为插件管理页该组件行「异常」、且按钮永不出现。
+		 * 直接返回插件对象，与官方模板一一对应，不依赖任何 interop 兜底。
+		 */
+		return { inject, apply, OptimizeButton, optimizePrompt, default: __defaultExport };
 	}
 });
 `

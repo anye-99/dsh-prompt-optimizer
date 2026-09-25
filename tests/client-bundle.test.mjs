@@ -101,6 +101,27 @@ try {
 }
 
 if (mod) {
+  /*
+   * 【组件行"异常"回归·2026-09-26】
+   *
+   * 官方 decoration 模板的形态是：factory **直接返回插件对象** { inject, apply }。
+   * 若退回成 `return module.exports`（带 default），宿主会走 unwrapExports
+   * (`exports.default ?? exports`) 兜底——那样 plugin.inject 极易丢，ctx.slots 拿不到，
+   * apply 首行 return：插件管理页该组件行显示「异常」，且按钮永不出现。
+   * 这里同时钉住"直接返回"与"两条路都带 inject"。
+   */
+  if (!mod.inject || !Array.isArray(mod.inject) || !mod.inject.includes('slots')) {
+    bad('factory 直接返回的对象必须带 inject:["slots"]', JSON.stringify(mod.inject))
+  } else {
+    ok('factory 直接返回的对象带 inject:["slots"]', JSON.stringify(mod.inject))
+  }
+  const viaUnwrap = mod.default ?? mod
+  if (!viaUnwrap.inject || !viaUnwrap.inject.includes('slots')) {
+    bad('经 unwrapExports（default ?? exports）后仍须带 inject', JSON.stringify(viaUnwrap.inject))
+  } else {
+    ok('经 unwrapExports 后仍带 inject')
+  }
+
   if (typeof mod.apply !== 'function') bad('导出 apply')
   else ok('导出 apply')
   if (typeof mod.OptimizeButton !== 'function') bad('导出 OptimizeButton')
