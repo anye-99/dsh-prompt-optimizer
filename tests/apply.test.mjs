@@ -10,9 +10,10 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { apply, name } from '../src/index.js'
 import * as hostMod from '../src/index.js'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /** 造一个够用的假宿主：effect/on/commands/webServer 四件套。 */
 function fakeCtx() {
@@ -76,6 +77,38 @@ test('client 半 default 必须带 inject（否则按钮挂不上）', async () 
   const plugin = mod.default ?? mod
   assert.deepEqual(plugin.inject, ['slots'], 'default 必须带 inject，否则 ctx.slots 拿不到')
   assert.equal(typeof plugin.apply, 'function')
+})
+
+/**
+ * 【版本漂移回归·2026-09-26】
+ *
+ * src/index.js 里的 VERSION 常量是**给用户看的运行时版本**：/optimize status 回执
+ * 与审计端点都读它。它曾长期停在 0.1.0，而 package.json 已升到 0.2.0——
+ * 用户敲 /optimize 看到的是错误版本号。
+ *
+ * VERSION 不是导出项，所以通过 /optimize 回执文本反解它，与 package.json 比对。
+ * 只改 package.json 忘了改这里（或反之），这条会立刻红。
+ */
+test('运行时 VERSION 与 package.json.version 一致', () => {
+  const here = dirname(fileURLToPath(import.meta.url))
+  const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf-8'))
+
+  const ctx = fakeCtx()
+  apply(ctx)
+  const optimize = ctx.commandList.find((c) => c.name === 'optimize')
+  assert.ok(optimize, '应注册 /optimize 命令')
+
+  // status 回执形如：提示词优化器 v0.2.0\n· 本会话：...
+  const out = optimize.handler({
+    agent: { session: { id: 'session-version-check' } },
+    rawInput: 'status',
+  })
+  const m = /提示词优化器 v([0-9]+\.[0-9]+\.[0-9]+)/.exec(out.text)
+  assert.ok(m, `回执里应含版本号，实际：${String(out.text)}`)
+  assert.equal(
+    m[1], pkg.version,
+    `VERSION(${m[1]}) 与 package.json.version(${pkg.version}) 不一致——升版本时两边都要改`,
+  )
 })
 
 test('apply 可装配：注册命令 + 路由 + pre-step 监听', () => {

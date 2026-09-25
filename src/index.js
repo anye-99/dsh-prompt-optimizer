@@ -31,7 +31,9 @@ export const name = 'dsh-prompt-optimizer'
 // 改为在 apply 内防御性取服务（拿不到就静默跳过对应能力），入口在任何端都能激活。
 export const Config = z.object({})
 
-const VERSION = '0.1.0'
+// 与 package.json 的 version 保持一致（/optimize status 回执与审计端点都读它）。
+// tests/apply.test.mjs 有一条断言盯住二者相等——升版本时别只改 package.json。
+const VERSION = '0.2.0'
 
 export function apply(ctx) {
   let activeSid = null
