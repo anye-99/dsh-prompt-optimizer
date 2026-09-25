@@ -1,0 +1,4 @@
+# 插件本地依赖链接由 install 脚本创建（junction 指向 profile 的 node_modules）。
+# 这是 DSH 生态的硬性约定：junction 注入的插件，其 import 从**包自身**的
+# node_modules 解析（真实路径），而不是 profile 的——不链就 import 失败。
+node_modules/

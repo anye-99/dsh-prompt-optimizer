@@ -1,0 +1,6 @@
+# dsh-prompt-optimizer bundle 层：插入插件行。
+# 纯引导层：零工具注册、默认开启、不激活时无可感知影响。
+- insert:
+    - id: dsh-prompt-optimizer
+      name: '@dsh-external/dsh-prompt-optimizer'
+      config: {}

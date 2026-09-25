@@ -1,0 +1,48 @@
+{
+  "name": "@dsh-external/dsh-prompt-optimizer",
+  "version": "0.2.0",
+  "description": "提示词优化器（双形态）：① 提示词框「优化」按钮——点击把当前草稿改写成结构化提示词（目标/背景/约束/验收）并写回，绝不自动发送；② 会话内实时优化器——含糊提示词自动在用户消息后近距离注入自查引导。两者共用同一套规则：绝不改写用户原话、不替用户发明意图、缺信息就留成待补槽位。零工具注册（无工具目录开销）。含档位、会话开关、去重与冷却、设置与审计端点。",
+  "license": "BSD-3-Clause",
+  "private": false,
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": {
+      "default": "./src/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "scripts",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "engines": {
+    "dsh": ">=0.1.7-rc.2"
+  },
+  "dependencies": {
+    "@deepseek-ai/schemastery": "^3.18.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-renderer"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\"",
+    "build:client": "node scripts/build-client.mjs",
+    "verify": "node scripts/verify-install.mjs",
+    "verify:enabled": "node scripts/verify-enabled.mjs"
+  }
+}
